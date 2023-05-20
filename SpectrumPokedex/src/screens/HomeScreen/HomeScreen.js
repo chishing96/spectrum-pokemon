@@ -8,10 +8,13 @@ import {
   ActivityIndicator,
   BackHandler,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
+  const navigation = useNavigation();
   const [pokemonList, setPokemonList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -55,10 +58,17 @@ const HomeScreen = () => {
     return <ActivityIndicator size="large" color="blue" />;
   };
 
+  const handleItemPress = (url) => {
+    navigation.navigate("PokemonDetails", { url });
+  };
+
   const renderItem = ({ item, index }) => {
     const pokemonNumber = index + 1;
     return (
-      <View style={styles.itemContainer}>
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => handleItemPress(item.url)}
+      >
         <View style={styles.numberContainer}>
           <Text style={styles.numberText}>{pokemonNumber}</Text>
         </View>
@@ -69,7 +79,7 @@ const HomeScreen = () => {
           style={styles.itemImage}
         />
         <Text style={styles.itemName}>{item.name}</Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
