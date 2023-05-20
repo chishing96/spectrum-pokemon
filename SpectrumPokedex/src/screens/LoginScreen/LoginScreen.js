@@ -17,6 +17,8 @@ const LoginScreen = () => {
     if (username === mockUsername && password === mockPassword) {
       //or if server response === 200.
       setIsLoggedIn(true);
+      setUsername("");
+      setPassword("");
       console.warn("Login success.");
       //use secured libraries to store tokens.
       //expo-secure-store, react-native-encrypted-storage, react-native-keychain, react-native-sensitive-info.
