@@ -9,6 +9,7 @@ import {
   BackHandler,
   StyleSheet,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
@@ -18,6 +19,8 @@ const HomeScreen = () => {
   const [pokemonList, setPokemonList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     fetchPokemon();
@@ -38,7 +41,7 @@ const HomeScreen = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=10`
+        "https://pokeapi.co/api/v2/pokemon?limit=20"
       );
       const data = response.data.results;
       setPokemonList((prevList) => [...prevList, ...data]);
@@ -46,16 +49,54 @@ const HomeScreen = () => {
     } catch (error) {
       console.log("Error fetching Pokemon list:", error);
       setLoading(false);
+      // Handle the error, e.g., show an error message to the user
     }
   };
 
-  const handleLoadMore = () => {
-    setOffset((prevOffset) => prevOffset + 10);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setOffset(0);
+    setPokemonList([]);
+    try {
+      await fetchPokemon();
+    } catch (error) {
+      console.log("Error refreshing Pokemon list:", error);
+      // Handle the error, show an error message, etc.
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore) {
+      return; // Prevent multiple simultaneous requests
+    }
+
+    setIsLoadingMore(true);
+    try {
+      const newOffset = offset + 20;
+      const response = await axios.get(
+        `https://pokeapi.co/api/v2/pokemon?limit=20&offset=${newOffset}`
+      );
+      const data = response.data.results;
+      setPokemonList((prevList) => [...prevList, ...data]);
+      setOffset(newOffset);
+    } catch (error) {
+      console.log("Error loading more Pokemon:", error);
+    }
+    setIsLoadingMore(false);
   };
 
   const renderFooter = () => {
-    if (!loading) return null;
-    return <ActivityIndicator size="large" color="blue" />;
+    if (!isLoadingMore) {
+      return null;
+    }
+
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   };
 
   const handleItemPress = (url) => {
@@ -90,10 +131,14 @@ const HomeScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         ListFooterComponent={renderFooter}
-        onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       />
-      <Button title="Load More" onPress={handleLoadMore} disabled={loading} />
+      <TouchableOpacity style={styles.loadMoreButton} onPress={handleLoadMore}>
+        <Text style={styles.loadMoreButtonText}>Load More</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -122,6 +167,17 @@ const styles = StyleSheet.create({
   },
   itemName: {
     marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  loadMoreButton: {
+    backgroundColor: "#89CFF0",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  loadMoreButtonText: {
     fontSize: 16,
     fontWeight: "bold",
   },
