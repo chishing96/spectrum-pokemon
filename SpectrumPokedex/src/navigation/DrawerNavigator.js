@@ -15,6 +15,7 @@ const CustomDrawerContent = (props) => {
   const onPressLogout = () => {
     //clear tokens
     navigation.navigate("Login");
+    console.warn("Logout success.");
   };
   return (
     <DrawerContentScrollView {...props}>
